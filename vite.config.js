@@ -10,9 +10,6 @@ export default defineConfig(({ mode }) => {
     build: {
       outDir: "docs",
     },
-    base:
-      mode === "development"
-        ? ""
-        : "https://github.com/lceihenX/WaterMask/docs",
+    base: mode === "development" ? "" : "https://lceihenx.github.io/WaterMask",
   };
 });
