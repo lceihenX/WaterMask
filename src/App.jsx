@@ -21,7 +21,7 @@ import styles from "./index.module.less";
 
 const CANVAS_DEFAULT_CONFIG = {
   text: "xCurrency hubs",
-  count: 1,
+  count: 4,
   fontSize: "30",
   fontFamily: "Microsoft Yahei",
   previewStatus: true,
@@ -64,12 +64,17 @@ const WaterMask = () => {
     if (canvasConfig.maskWorkStatus) {
       context.font = `${fontSize}px ${fontFamily}`;
 
-      const widthWrap = canvasRef.current.width / count;
-      const heightWrap = canvasRef.current.height / count;
+      let widthWrap = canvasRef.current.width / count;
+      let heightWrap = canvasRef.current.height / count;
+
       // context.rotate(-rotate - 180);
+      console.log("widthWrap", widthWrap);
+      console.log("heightWrap", heightWrap);
+
       for (let i = 1; i <= count; i++) {
-        context.fillText(text, i * widthWrap, i * heightWrap);
+        context.fillText(text, i * widthWrap * 0.5, i * heightWrap * 0.5);
       }
+
       // context.rotate(rotate + 180);
       const currentTextCanvasData = context.getImageData(
         0,
