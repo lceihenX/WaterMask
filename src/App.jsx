@@ -1,15 +1,33 @@
-import { Card, Button, Upload, Space, message, Switch } from "antd";
+import {
+  Card,
+  Button,
+  Upload,
+  Space,
+  message,
+  Switch,
+  Input,
+  InputNumber,
+  Tooltip,
+} from "antd";
 import { UploadOutlined, CloudDownloadOutlined } from "@ant-design/icons";
 
 import { useRef, useState } from "react";
 import { useEffect } from "react";
 import {
   handleConbinatePngCanvasData,
-  handleConbinateJpgCanvasData,
   handleReTransformPngData,
-  handleReTransformJpgData,
 } from "./utils";
 import styles from "./index.module.less";
+
+const CANVAS_DEFAULT_CONFIG = {
+  text: "xCurrency hubs",
+  count: 1,
+  fontSize: "30",
+  fontFamily: "Microsoft Yahei",
+  previewStatus: true,
+  maskWorkStatus: true,
+};
+
 const WaterMask = () => {
   const canvasRef = useRef(null);
 
@@ -23,20 +41,31 @@ const WaterMask = () => {
 
   const [textCanvasData, setTextCanvasData] = useState(null);
 
-  const [workStatus, setWorkStatus] = useState(true);
-
   const [colorPosition, setColorPosition] = useState("R");
+
+  const [canvasConfig, setCanvasConfig] = useState({
+    ...CANVAS_DEFAULT_CONFIG,
+    ...(JSON.parse(localStorage.getItem("canvasConfig")) || {}),
+  });
+
+  useEffect(() => {
+    localStorage.setItem("canvasConfig", JSON.stringify(canvasConfig));
+  }, [canvasConfig]);
 
   useEffect(() => {
     setCanvasRefContext(canvasRef.current?.getContext("2d"));
   }, []);
 
   useEffect(() => {
+    const { fontSize, fontFamily, text, count } = canvasConfig;
     const context = textCanvasRef.current?.getContext("2d");
     setTextCanvasRefContext(context);
-    if (workStatus) {
-      context.font = "30px Microsoft Yahei";
-      context.fillText("hello world！", 80, 80);
+    if (canvasConfig.maskWorkStatus) {
+      context.font = `${fontSize}px ${fontFamily}`;
+      for (let i = 1; i <= count; i++) {
+        context.fillText(text, i * fontSize, i * fontSize);
+      }
+
       const currentTextCanvasData = context.getImageData(
         0,
         0,
@@ -45,23 +74,12 @@ const WaterMask = () => {
       );
       setTextCanvasData(currentTextCanvasData);
       console.log("currentTextCanvasData", currentTextCanvasData);
-    } else {
     }
   }, [selectFile]);
 
-  const reTransformData = (originalData, sourceFile) => {
-    const { type } = sourceFile;
+  const reTransformData = (originalData) => {
     let data = originalData.data;
-    switch (type) {
-      case "image/jpeg":
-        handleReTransformPngData(data);
-        break;
-      case "image/png":
-        handleReTransformPngData(data);
-        break;
-      default:
-        break;
-    }
+    handleReTransformPngData(data);
   };
 
   const onChange = (selectOption) => {
@@ -93,8 +111,9 @@ const WaterMask = () => {
         imageHeight
       );
       setSelectFile(file.originFileObj);
-      if (!workStatus) {
-        reTransformData(processData, file.originFileObj);
+      console.log(canvasConfig.maskWorkStatus);
+      if (!canvasConfig.maskWorkStatus) {
+        reTransformData(processData);
         canvasRefContext.clearRect(0, 0, imageWidth, imageHeight);
 
         console.log("clearRect");
@@ -118,7 +137,7 @@ const WaterMask = () => {
     }
 
     transformData();
-    const { name, type } = selectFile;
+    const { name } = selectFile;
     const viewData = canvasRef.current?.toDataURL("image/png");
 
     const link = document.createElement("a");
@@ -138,38 +157,78 @@ const WaterMask = () => {
     const imageData = imageDataObject.data;
     let attachData = textCanvasData.data;
 
-    const type = selectFile.type;
-
-    switch (type) {
-      case "image/jpeg":
-        handleConbinatePngCanvasData(imageData, attachData, colorPosition);
-        break;
-      case "image/png":
-        handleConbinatePngCanvasData(imageData, attachData, colorPosition);
-        break;
-      default:
-        message.warning(`缺少${type}类型的处理程序`);
-        break;
-    }
+    handleConbinatePngCanvasData(imageData, attachData, colorPosition);
 
     canvasRefContext.putImageData(imageDataObject, 0, 0);
   };
   return (
     <section>
       <Card>
-        <Space>
-          <Upload onChange={onChange} fileList={[]}>
-            <Button icon={<UploadOutlined />}>Select Image</Button>
-          </Upload>
-          <Button icon={<CloudDownloadOutlined />} onClick={handleDownload}>
-            Down Load
-          </Button>
+        <Space direction="vertical" size={"large"}>
           <Space>
+            <Upload onChange={onChange} fileList={[]}>
+              <Button type="primary" icon={<UploadOutlined />}>
+                Select Image
+              </Button>
+            </Upload>
+            <Tooltip title="only real-png support">
+              <Button
+                type="primary"
+                icon={<CloudDownloadOutlined />}
+                onClick={handleDownload}
+                disabled={!canvasConfig.maskWorkStatus}
+              >
+                Down Load
+              </Button>
+            </Tooltip>
+
             <Switch
               checkedChildren="加水印"
               unCheckedChildren="解水印"
-              defaultChecked={workStatus}
-              onChange={(status) => setWorkStatus(status)}
+              defaultChecked={canvasConfig.maskWorkStatus}
+              onChange={(status) =>
+                setCanvasConfig({
+                  ...canvasConfig,
+                  maskWorkStatus: status,
+                })
+              }
+            />
+            {/* <Switch
+              checkedChildren="预览"
+              unCheckedChildren="原图"
+              defaultChecked={canvasConfig.previewStatus}
+              onChange={(status) => {
+                setCanvasConfig({
+                  ...canvasConfig,
+                  previewStatus: status,
+                });
+              }}
+            /> */}
+          </Space>
+
+          <Space>
+            <label>隐写文本:</label>
+            <Input
+              placeholder="请输入隐写文本"
+              onChange={(event) =>
+                setCanvasConfig({
+                  ...canvasConfig,
+                  text: event.target.value,
+                })
+              }
+              defaultValue={canvasConfig.text}
+            />
+            <label>隐写文本个数:</label>
+            <InputNumber
+              min="1"
+              placeholder="请输入隐写文本"
+              onChange={(value) =>
+                setCanvasConfig({
+                  ...canvasConfig,
+                  count: value,
+                })
+              }
+              defaultValue={canvasConfig.count}
             />
           </Space>
         </Space>
