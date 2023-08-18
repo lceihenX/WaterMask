@@ -26,6 +26,7 @@ const CANVAS_DEFAULT_CONFIG = {
   fontFamily: "Microsoft Yahei",
   previewStatus: true,
   maskWorkStatus: true,
+  rotate: 0,
 };
 
 const WaterMask = () => {
@@ -57,15 +58,19 @@ const WaterMask = () => {
   }, []);
 
   useEffect(() => {
-    const { fontSize, fontFamily, text, count } = canvasConfig;
+    const { fontSize, fontFamily, text, count, rotate } = canvasConfig;
     const context = textCanvasRef.current?.getContext("2d");
     setTextCanvasRefContext(context);
     if (canvasConfig.maskWorkStatus) {
       context.font = `${fontSize}px ${fontFamily}`;
-      for (let i = 1; i <= count; i++) {
-        context.fillText(text, i * fontSize, i * fontSize);
-      }
 
+      const widthWrap = canvasRef.current.width / count;
+      const heightWrap = canvasRef.current.height / count;
+      // context.rotate(-rotate - 180);
+      for (let i = 1; i <= count; i++) {
+        context.fillText(text, i * widthWrap, i * heightWrap);
+      }
+      // context.rotate(rotate + 180);
       const currentTextCanvasData = context.getImageData(
         0,
         0,
@@ -193,6 +198,7 @@ const WaterMask = () => {
                 })
               }
             />
+
             {/* <Switch
               checkedChildren="预览"
               unCheckedChildren="原图"
@@ -230,6 +236,18 @@ const WaterMask = () => {
               }
               defaultValue={canvasConfig.count}
             />
+            {/* <label>旋转角度:</label>
+            <InputNumber
+              min=""
+              placeholder="请输入旋转角度"
+              onChange={(value) =>
+                setCanvasConfig({
+                  ...canvasConfig,
+                  rotate: value,
+                })
+              }
+              defaultValue={canvasConfig.rotate}
+            /> */}
           </Space>
         </Space>
       </Card>
