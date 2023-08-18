@@ -8,6 +8,7 @@ import {
   Input,
   InputNumber,
   Tooltip,
+  Tour,
 } from "antd";
 import { UploadOutlined, CloudDownloadOutlined } from "@ant-design/icons";
 
@@ -44,10 +45,38 @@ const WaterMask = () => {
 
   const [colorPosition, setColorPosition] = useState("R");
 
+  const ref1 = useRef(null);
+  const ref2 = useRef(null);
+  const ref3 = useRef(null);
+
   const [canvasConfig, setCanvasConfig] = useState({
     ...CANVAS_DEFAULT_CONFIG,
     ...(JSON.parse(localStorage.getItem("canvasConfig")) || {}),
   });
+
+  const steps = [
+    {
+      title: "Select Image",
+      description: "Select your image here.",
+
+      target: () => ref1.current,
+    },
+    {
+      title: "DownLoad",
+      description: "DownLoad your image after auto encrypt.",
+      target: () => ref2.current,
+    },
+    {
+      title: "Close",
+      description: "Close for work mode to verification.",
+      target: () => ref3.current,
+    },
+    {
+      title: "Select Image",
+      description: "Select Image to verification.",
+      target: () => ref1.current,
+    },
+  ];
 
   useEffect(() => {
     localStorage.setItem("canvasConfig", JSON.stringify(canvasConfig));
@@ -177,7 +206,7 @@ const WaterMask = () => {
         <Space direction="vertical" size={"large"}>
           <Space>
             <Upload onChange={onChange} fileList={[]}>
-              <Button type="primary" icon={<UploadOutlined />}>
+              <Button type="primary" icon={<UploadOutlined />} ref={ref1}>
                 Select Image
               </Button>
             </Upload>
@@ -187,12 +216,14 @@ const WaterMask = () => {
                 icon={<CloudDownloadOutlined />}
                 onClick={handleDownload}
                 disabled={!canvasConfig.maskWorkStatus}
+                ref={ref2}
               >
                 Down Load
               </Button>
             </Tooltip>
 
             <Switch
+              ref={ref3}
               checkedChildren="加水印"
               unCheckedChildren="解水印"
               defaultChecked={canvasConfig.maskWorkStatus}
@@ -204,17 +235,17 @@ const WaterMask = () => {
               }
             />
 
-            {/* <Switch
-              checkedChildren="预览"
-              unCheckedChildren="原图"
-              defaultChecked={canvasConfig.previewStatus}
+            <Switch
+              checkedChildren="帮助"
+              unCheckedChildren="不需要帮助"
+              defaultChecked={canvasConfig.help}
               onChange={(status) => {
                 setCanvasConfig({
                   ...canvasConfig,
-                  previewStatus: status,
+                  help: status,
                 });
               }}
-            /> */}
+            />
           </Space>
 
           <Space>
@@ -265,6 +296,16 @@ const WaterMask = () => {
           className={styles.text_canvas_contain}
         ></canvas>
       </article>
+      <Tour
+        open={canvasConfig.help}
+        onClose={() => {
+          setCanvasConfig({
+            ...canvasConfig,
+            help: false,
+          });
+        }}
+        steps={steps}
+      />
     </section>
   );
 };
